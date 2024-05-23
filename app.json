@@ -1,0 +1,25 @@
+{
+  "account_file":"accounts.json",
+  "receive_addr": "0x8e0cd8dC765f8a69703ca7b56cee9802080E4052",
+  "speed":3000,
+  "tx_count": 100,
+  "tx_type": 0,
+  "erc20_contract": "0x8e0cd8dC765f8a69703ca7b56cee9802080E4052",
+  "rpc_node": [
+    "http://127.0.0.1:8545",
+  ],
+  "send_routine_count": 3,
+  "amount": 10000000,
+  "chain_id": 32382,
+  "main_account_priv": "",
+  "batch_transfer_contract": "0x30b444D622c79b2fb5360415E916b1f2A79AfE7a",
+  "sleepTime": 0,
+  "afterSendTranSleepTime": 10,
+  "storageAccFileName":"Address"
+}
+
+
+
+
+
+
