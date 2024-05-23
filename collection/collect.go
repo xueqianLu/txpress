@@ -98,6 +98,7 @@ func (c *Collect) Run() {
 	tm := time.NewTicker(duration)
 	defer tm.Stop()
 	bwait := true
+	var waitLatest = sync.OnceFunc(func() { log.Info("wait latest transaction receipt") })
 	for bwait {
 		select {
 		case <-tm.C:
@@ -108,7 +109,7 @@ func (c *Collect) Run() {
 				c.endblock = r.BlockNumber.Int64()
 				bwait = false
 			} else {
-				log.Info("wait latest transaction receipt")
+				waitLatest()
 				time.Sleep(time.Second)
 			}
 		}
