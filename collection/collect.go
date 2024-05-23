@@ -127,6 +127,7 @@ func (c *Collect) Run() {
 		block, err := client.BlockByNumber(context.Background(), big.NewInt(i))
 		if err != nil {
 			log.Error("get block by number failed", "err", err, "block number", i)
+			time.Sleep(time.Second)
 			continue
 		}
 		i++
