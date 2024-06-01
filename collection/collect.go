@@ -89,28 +89,18 @@ func (c *Collect) getBlockCostTime(blocks []*types.Block, index int) uint64 {
 func (c *Collect) Run() {
 	client := clientpool.GetClient()
 	// 1. check latest tx receipt.
-	duration := time.Second * 5
-	if c.totalsend <= 1000 {
-		duration = time.Second * 5
-	} else if c.totalsend > 1000 {
-		duration = time.Second * 10 * time.Duration(c.totalsend/1000)
-	}
-	tm := time.NewTicker(duration)
-	defer tm.Stop()
+	tick := time.NewTicker(time.Second * 5)
+	defer tick.Stop()
+	log.Info("wait latest transaction receipt")
 	bwait := true
-	var waitLatest = sync.OnceFunc(func() { log.Info("wait latest transaction receipt") })
 	for bwait {
 		select {
-		case <-tm.C:
-			c.endblock = c.startBlock + 10
-			bwait = false
-		default:
+		case <-tick.C:
 			if r, err := client.TransactionReceipt(context.Background(), c.latestTx().Hash()); err == nil {
 				c.endblock = r.BlockNumber.Int64()
 				bwait = false
 			} else {
-				waitLatest()
-				time.Sleep(time.Second)
+				//log.Info("wait latest transaction receipt")
 			}
 		}
 	}
@@ -120,8 +110,6 @@ func (c *Collect) Run() {
 	txsinfo := make(map[common.Hash]*types.Block, 1000000)
 	find := int32(0)
 	extblock := 0
-
-	//realStart := c.startBlock
 
 	log.Infof("collect blocks txfind %d, start block is %d, endblock is %d\n", find, c.startBlock, c.endblock)
 	for i := c.startBlock; i <= c.endblock; {
