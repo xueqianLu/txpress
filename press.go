@@ -40,12 +40,12 @@ func maketxSequences(cfg *config.Config, accounts []*tool.Account) [][]*types.Tr
 	tasks := tool.NewTasks(10, func(task interface{}) {
 		var tx *types.Transaction
 		p := task.(param)
-		userTxs := make([]*types.Transaction, 0, p.count)
+		userTxs := make([]*types.Transaction, 0)
 		for i := 0; i < p.count; i++ {
 			if cfg.Type == 1 {
 				tx = p.account.MakeTokenTx(cfg, p.nonce+uint64(i))
 			} else {
-				tx = p.account.MakeNormalTx(cfg, p.nonce)
+				tx = p.account.MakeNormalTx(cfg, p.nonce+uint64(i))
 			}
 			signedtx, err := p.account.SignTx(cfg, tx)
 			if err != nil {
