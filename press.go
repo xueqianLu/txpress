@@ -24,16 +24,20 @@ func maketxSequences(cfg *config.Config, accounts []*tool.Account) [][]*types.Tr
 	taskpool := make(chan interface{}, len(accounts))
 	totalCount := 0
 	for i := 0; i < len(accounts); i++ {
+		if totalCount >= cfg.Count {
+			break
+		}
+		count := countPerAccount
+		if totalCount+count > cfg.Count {
+			count = cfg.Count - totalCount
+		}
 		p := param{
 			account: accounts[i],
 			nonce:   accounts[i].Nonce,
+			count:   count,
 		}
-		if i == len(accounts)-1 {
-			p.count = cfg.Count - totalCount
-		} else {
-			p.count = countPerAccount
-			totalCount += countPerAccount
-		}
+		totalCount += count
+		log.Infof("account (%s) make tx count %v", p.account.Address, p.count)
 		taskpool <- p
 	}
 	output := make(chan []*types.Transaction, len(accounts))
