@@ -62,7 +62,7 @@ func maketxSequences(cfg *config.Config, accounts []*tool.Account) [][]*types.Tr
 	tasks.Done()
 	total := 0
 	txs := make([][]*types.Transaction, 0, len(accounts))
-	for len(txs) < total {
+	for total < cfg.Count {
 		signedtxs := <-output
 		total += len(signedtxs)
 		txs = append(txs, signedtxs)
