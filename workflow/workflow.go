@@ -91,12 +91,12 @@ func (w *Workflow) Start() {
 		log.Info("all chain run task finished")
 		// calculate tps
 		record := w.calculateTps(w.chains[0], minBlock, maxBlock)
-		if record.Tps > lastTps {
+		if record.Tps > 0 && record.Tps >= lastTps {
 			baseTxCount *= 2
 			lastTps = record.Tps
 		} else {
 			noincrease++
-			if noincrease > 3 {
+			if noincrease >= 2 {
 				break
 			}
 		}
