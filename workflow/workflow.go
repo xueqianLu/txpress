@@ -71,6 +71,13 @@ func (w *Workflow) Start() {
 			case result := <-resultCh:
 				log.Infof("chain %s finished, min block: %d, max block: %d", result.chain, result.minBlock, result.maxBlock)
 				results = append(results, result)
+				if minBlock == 0 {
+					minBlock = result.minBlock
+				}
+				if maxBlock == 0 {
+					maxBlock = result.maxBlock
+				}
+
 				if result.minBlock < minBlock {
 					minBlock = result.minBlock
 				}
