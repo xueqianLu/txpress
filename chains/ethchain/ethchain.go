@@ -60,6 +60,7 @@ func (e EthChain) SendTxs(txs []types.ChainTx) ([]string, error) {
 				"chain": e.config.Name,
 				"rpc":   e.rpc,
 				"index": e.index,
+				"tx":    etx.Transaction.Hash().String(),
 				"err":   err,
 			}).Error("send tx failed")
 			continue
