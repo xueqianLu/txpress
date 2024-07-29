@@ -143,6 +143,9 @@ func (w *Workflow) calculateTps(chain types.ChainPlugin, minBlock, maxBlock int)
 func (w *Workflow) makeTx(chain types.ChainPlugin, baseCount int, batch int, checkNonce bool) [][]types.ChainTx {
 	txs := make([][]types.ChainTx, batch)
 	for i := 0; i < batch; i++ {
+		if i > 0 {
+			checkNonce = false
+		}
 		mtxs, err := chain.CreateTxs(baseCount, checkNonce)
 		if err != nil {
 			return nil
