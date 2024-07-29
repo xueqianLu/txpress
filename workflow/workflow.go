@@ -166,6 +166,7 @@ func (w *Workflow) loop(chain types.ChainPlugin, taskCh chan Task, result chan R
 			txs := w.makeTx(chain, task.baseCount, task.batch, first)
 			_min, _max := w.runTest(chain, txs, task.interval)
 			result <- Result{
+				chain:    chain.Id(),
 				minBlock: _min,
 				maxBlock: _max,
 			}
@@ -207,9 +208,18 @@ func (w *Workflow) runTest(chain types.ChainPlugin, txs [][]types.ChainTx, inter
 			if err != nil {
 				continue
 			}
+			if _min == 0 {
+				_min = block
+			}
+
 			if block < _min {
 				_min = block
 			}
+
+			if _max == 0 {
+				_max = block
+			}
+
 			if block > _max {
 				_max = block
 			}
