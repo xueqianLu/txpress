@@ -135,15 +135,13 @@ func (w *Workflow) calculateTps(chain types.ChainPlugin, minBlock, maxBlock int)
 	record := Record{
 		Begin:     int(minBlock),
 		End:       int(maxBlock),
-		TotalTime: int(end - start),
+		TotalTime: int(end-start) + chain.SecondPerBlock(),
 		TotalTx:   int(txCount),
 	}
-	if end-start > 0 {
-		record.Tps = int(txCount / (end - start))
+	if record.TotalTime > 0 {
+		record.Tps = int(txCount) / (record.TotalTime)
 	}
-	if end-start == 0 {
-		log.Infof("end block equal start block with number %d", end)
-	}
+
 	return record
 }
 

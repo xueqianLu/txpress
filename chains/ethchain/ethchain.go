@@ -65,12 +65,12 @@ func (e EthChain) SendTxs(txs []types.ChainTx) ([]string, error) {
 			}).Error("send tx failed")
 			continue
 		} else {
-			log.WithFields(log.Fields{
-				"chain": e.config.Name,
-				"rpc":   e.rpc,
-				"index": e.index,
-				"tx":    etx.Transaction.Hash().String(),
-			}).Info("send tx success")
+			//log.WithFields(log.Fields{
+			//	"chain": e.config.Name,
+			//	"rpc":   e.rpc,
+			//	"index": e.index,
+			//	"tx":    etx.Transaction.Hash().String(),
+			//}).Info("send tx success")
 		}
 		hash := etx.Transaction.Hash()
 		hashes = append(hashes, hash.String())
@@ -129,6 +129,10 @@ func (e EthChain) GetBlockInfo(number int64) (types.BlockInfo, error) {
 
 func (e EthChain) Id() string {
 	return fmt.Sprintf("%s-%d", e.config.Name, e.index)
+}
+
+func (e EthChain) SecondPerBlock() int {
+	return 12
 }
 
 var (

@@ -18,6 +18,7 @@ type ChainPlugin interface {
 	TxReceipt(hash string) error
 	TxBlock(hash string) (int, error)
 	GetBlockInfo(number int64) (BlockInfo, error)
+	SecondPerBlock() int
 	Id() string
 }
 
