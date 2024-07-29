@@ -143,6 +143,9 @@ func (w *Workflow) loop(chain types.ChainPlugin, taskCh chan Task, result chan R
 				minBlock: _min,
 				maxBlock: _max,
 			}
+			if first {
+				first = false
+			}
 
 		case <-w.quit:
 			return
