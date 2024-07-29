@@ -54,6 +54,7 @@ func (w *Workflow) Start() {
 	baseTxCount := w.conf.BaseCount
 	lastTps := 0
 	noincrease := 0
+	history := make([]Record, 0)
 
 	for {
 		for _, ch := range taskChs {
@@ -100,6 +101,7 @@ func (w *Workflow) Start() {
 				break
 			}
 		}
+		history = append(history, record)
 		log.WithFields(log.Fields{
 			"begin":     record.Begin,
 			"end":       record.End,
@@ -111,7 +113,15 @@ func (w *Workflow) Start() {
 
 	close(w.quit)
 	wg.Wait()
-
+	for _, record := range history {
+		log.WithFields(log.Fields{
+			"begin":     record.Begin,
+			"end":       record.End,
+			"totaltime": record.TotalTime,
+			"totaltx":   record.TotalTx,
+			"tps":       record.Tps,
+		}).Info("test history")
+	}
 }
 
 func (w *Workflow) calculateTps(chain types.ChainPlugin, minBlock, maxBlock int) Record {
