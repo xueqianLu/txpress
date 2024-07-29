@@ -35,6 +35,10 @@ func (e EthChain) CreateTxs(count int, checkNonce bool) ([]types.ChainTx, error)
 		acc := e.accounts[i%len(e.accounts)]
 		if _, exist := updated[acc.Address]; !exist && checkNonce {
 			acc.Nonce, _ = e.client.NonceAt(e.ctx, acc.Address, nil)
+			log.WithFields(log.Fields{
+				"acc":   acc.Address.String(),
+				"nonce": acc.Nonce,
+			}).Info("update account nonce")
 			updated[acc.Address] = true
 		}
 		tx := acc.MakeNormalTx(txcfg, acc.Nonce)
