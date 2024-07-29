@@ -64,6 +64,13 @@ func (e EthChain) SendTxs(txs []types.ChainTx) ([]string, error) {
 				"err":   err,
 			}).Error("send tx failed")
 			continue
+		} else {
+			log.WithFields(log.Fields{
+				"chain": e.config.Name,
+				"rpc":   e.rpc,
+				"index": e.index,
+				"tx":    etx.Transaction.Hash().String(),
+			}).Info("send tx success")
 		}
 		hash := etx.Transaction.Hash()
 		hashes = append(hashes, hash.String())
