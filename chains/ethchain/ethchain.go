@@ -89,6 +89,7 @@ func (e EthChain) TxBlock(hash string) (int, error) {
 			"rpc":   e.rpc,
 			"index": e.index,
 			"err":   err,
+			"hash":  hash,
 		}).Error("get tx receipt failed")
 		return 0, err
 	}
@@ -151,6 +152,7 @@ func NewEthChain(rpc string, index int, config types.ChainConfig) (types.ChainPl
 		accounts: chainAccounts,
 		client:   client,
 		chainId:  chainId,
+		config:   config,
 	}, nil
 
 }

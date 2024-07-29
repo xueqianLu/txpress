@@ -13,6 +13,14 @@ type Task struct {
 	interval  time.Duration
 }
 
+type Record struct {
+	Begin     int
+	End       int
+	TotalTime int
+	TotalTx   int
+	Tps       int
+}
+
 type Result struct {
 	chain    string
 	minBlock int
@@ -73,16 +81,25 @@ func (w *Workflow) Start() {
 				log.Infof("wait test finished")
 			}
 		}
+		log.Info("all chain run task finished")
 		// calculate tps
-		tps := w.calculateTps(w.chains[0], minBlock, maxBlock)
-		if tps > lastTps {
+		record := w.calculateTps(w.chains[0], minBlock, maxBlock)
+		if record.Tps > lastTps {
 			baseTxCount *= 2
+			lastTps = record.Tps
 		} else {
 			noincrease++
 			if noincrease > 3 {
 				break
 			}
 		}
+		log.WithFields(log.Fields{
+			"begin":     record.Begin,
+			"end":       record.End,
+			"totaltime": record.TotalTime,
+			"totaltx":   record.TotalTx,
+			"tps":       record.Tps,
+		}).Info("test one round finished")
 	}
 
 	close(w.quit)
@@ -90,7 +107,7 @@ func (w *Workflow) Start() {
 
 }
 
-func (w *Workflow) calculateTps(chain types.ChainPlugin, minBlock, maxBlock int) int {
+func (w *Workflow) calculateTps(chain types.ChainPlugin, minBlock, maxBlock int) Record {
 	start := int64(0)
 	end := int64(0)
 	txCount := int64(0)
@@ -108,13 +125,19 @@ func (w *Workflow) calculateTps(chain types.ChainPlugin, minBlock, maxBlock int)
 		}
 		txCount += block.TxCount
 	}
+	record := Record{
+		Begin:     int(minBlock),
+		End:       int(maxBlock),
+		TotalTime: int(end - start),
+		TotalTx:   int(txCount),
+	}
 	if end-start > 0 {
-		return int(txCount / (end - start))
+		record.Tps = int(txCount / (end - start))
 	}
 	if end-start == 0 {
 		log.Infof("end block equal start block with number %d", end)
 	}
-	return 0
+	return record
 }
 
 func (w *Workflow) makeTx(chain types.ChainPlugin, baseCount int, batch int, checkNonce bool) [][]types.ChainTx {
@@ -174,6 +197,7 @@ func (w *Workflow) runTest(chain types.ChainPlugin, txs [][]types.ChainTx, inter
 	}
 	var _min, _max int
 	for len(waited) > 0 {
+		time.Sleep(time.Second)
 		for hash, _ := range waited {
 			time.Sleep(time.Millisecond * 10)
 			block, err := chain.TxBlock(hash)
