@@ -73,7 +73,7 @@ func GetAccountJson(accountFile string) []*Account {
 		for _, acc := range accs {
 			private := acc.Private
 			if strings.HasPrefix(private, "0x") {
-				acc.Private = private[2:]
+				private = acc.Private[2:]
 			}
 			acc.PK, err = crypto.HexToECDSA(private)
 			if err != nil {
