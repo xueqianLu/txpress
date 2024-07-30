@@ -3,6 +3,7 @@ package chains
 import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xueqianLu/txpress/chains/ethchain"
+	"github.com/xueqianLu/txpress/chains/vechain"
 	"github.com/xueqianLu/txpress/types"
 )
 
@@ -14,7 +15,7 @@ func NewChains(config types.ChainConfig) []types.ChainPlugin {
 	case "eth":
 		createFunc = ethchain.NewEthChain
 	case "vechain":
-		//createFunc = vechain.NewVechainChain
+		createFunc = vechain.NewVeChain
 	default:
 		log.Errorf("unsupport chain %s", config.Name)
 		return nil
