@@ -22,5 +22,5 @@ txpress:
 clean:
 	rm -fr build/*
 
-#docker:
-#	docker build -t manager:${TAG} .
+docker:
+	docker build -t txpress:${TAG} .
