@@ -2,7 +2,6 @@ package chains
 
 import (
 	log "github.com/sirupsen/logrus"
-	"github.com/xueqianLu/txpress/chains/ethchain"
 	"github.com/xueqianLu/txpress/chains/vechain"
 	"github.com/xueqianLu/txpress/types"
 )
@@ -12,8 +11,6 @@ func NewChains(config types.ChainConfig) []types.ChainPlugin {
 
 	var createFunc func(rpc string, index int, config types.ChainConfig) (types.ChainPlugin, error)
 	switch config.Name {
-	case "eth":
-		createFunc = ethchain.NewEthChain
 	case "vechain":
 		createFunc = vechain.NewVeChain
 	default:
