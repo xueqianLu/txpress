@@ -45,6 +45,13 @@ func (acc *AccountInfo) MakeTx(cfg txConfig, nonce int) *tx.Transaction {
 	return tx
 }
 
+func padding(s string, length int) string {
+	if len(s) >= length {
+		return s
+	}
+	return strings.Repeat("0", length-len(s)) + s
+}
+
 func GetAccountJson(accountFile string) []*AccountInfo {
 	data, err := os.ReadFile(accountFile)
 	if err != nil || len(data) == 0 {
@@ -61,9 +68,10 @@ func GetAccountJson(accountFile string) []*AccountInfo {
 			if strings.HasPrefix(private, "0x") {
 				private = acc.Private[2:]
 			}
+			private = padding(private, 64)
 			acc.PK, err = crypto.HexToECDSA(private)
 			if err != nil {
-				log.Error("hex to ecdsa failed", "err", err)
+				log.Error("hex to ecdsa failed", "err", err, "private", private)
 			}
 		}
 		log.Info("get accounts from json", "len", len(accs))
