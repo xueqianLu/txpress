@@ -59,6 +59,13 @@ func createAccounts(count int) []*Account {
 	return accs
 }
 
+func padding(s string, length int) string {
+	if len(s) >= length {
+		return s
+	}
+	return strings.Repeat("0", length-len(s)) + s
+}
+
 func GetAccountJson(accountFile string) []*Account {
 	data, err := os.ReadFile(accountFile)
 	if err != nil || len(data) == 0 {
@@ -75,6 +82,7 @@ func GetAccountJson(accountFile string) []*Account {
 			if strings.HasPrefix(private, "0x") {
 				private = acc.Private[2:]
 			}
+			private = padding(private, 64)
 			acc.PK, err = crypto.HexToECDSA(private)
 			if err != nil {
 				log.Error("hex to ecdsa failed", "err", err)
