@@ -69,6 +69,7 @@ var rootCmd = &cobra.Command{
 				BaseCount: cfg.BaseCount,
 				Batch:     cfg.Batch,
 				Interval:  time.Duration(cfg.Interval) * time.Second,
+				IncRate:   cfg.IncRate,
 			})
 
 			if cpuProfile {

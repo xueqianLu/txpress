@@ -1,15 +1,15 @@
 {
   "rpc-nodes": [
-    "http://13.41.176.56:11000",
-    "http://13.41.176.56:11000",
-    "http://13.41.176.56:11000"
+    "http://127.0.0.1:10001",
+    "http://127.0.0.1:10002"
   ],
-  "chain-name": "eth",
-  "base-count": 10,
+  "chain-name": "vechain",
+  "base-count": 2,
   "interval": 1,
   "batch": 180,
   "amount": "10000000",
   "accounts":"accounts.json",
+  "inc-rate": 50,
   "receive_addr": "0x8e0cd8dC765f8a69703ca7b56cee9802080E4052"
 }
 
