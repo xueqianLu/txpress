@@ -97,10 +97,11 @@ func (w *Workflow) Start() {
 			baseTxCount += incs
 			lastTps = record.Tps
 		} else {
-			noincrease++
+
 			if noincrease >= 2 {
 				break
 			}
+			noincrease++
 		}
 		history = append(history, record)
 		log.WithFields(log.Fields{
