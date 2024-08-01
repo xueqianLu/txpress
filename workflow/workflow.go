@@ -225,6 +225,9 @@ func (w *Workflow) runTest(chain types.ChainPlugin, txs [][]types.ChainTx, inter
 			if err != nil {
 				continue
 			}
+			if block == 0 {
+				continue
+			}
 			if _min == 0 {
 				_min = block
 			}

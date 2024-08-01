@@ -75,6 +75,34 @@ func (c *Client) BlockByNumber(ctx context.Context, number *big.Int) (BlockInfo,
 	return blk, nil
 }
 
+func (c *Client) FinalizedBlock(ctx context.Context) (BlockInfo, error) {
+	api := fmt.Sprintf("%s/blocks/finalized", c.url)
+	res, err := c.get(api)
+	if err != nil {
+		return BlockInfo{}, err
+	}
+	var blk BlockInfo
+	if err = json.Unmarshal(res, &blk); err != nil {
+		log.Printf("json.Unmarshal finalized block info: %v", err)
+		return BlockInfo{}, err
+	}
+	return blk, nil
+}
+
+func (c *Client) LatestBlock(ctx context.Context) (BlockInfo, error) {
+	api := fmt.Sprintf("%s/blocks/", c.url)
+	res, err := c.get(api)
+	if err != nil {
+		return BlockInfo{}, err
+	}
+	var blk BlockInfo
+	if err = json.Unmarshal(res, &blk); err != nil {
+		log.Printf("json.Unmarshal latest block info: %v", err)
+		return BlockInfo{}, err
+	}
+	return blk, nil
+}
+
 func (c *Client) post(url string, obj interface{}) ([]byte, error) {
 	data, err := json.Marshal(obj)
 	if err != nil {
