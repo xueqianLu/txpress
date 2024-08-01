@@ -26,6 +26,7 @@ type RunConfig struct {
 	BaseCount int
 	Interval  time.Duration
 	Batch     int
+	IncRate   int
 }
 
 type ChainConfig struct {
@@ -37,4 +38,5 @@ type ChainConfig struct {
 	Receiver  string   `json:"receiver"`
 	Amount    string   `json:"amount"`
 	Accounts  string   `json:"accounts"`
+	IncRate   int      `json:"inc-rate"`
 }

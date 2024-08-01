@@ -93,7 +93,8 @@ func (w *Workflow) Start() {
 		// calculate tps
 		record := w.calculateTps(w.chains[0], minBlock, maxBlock)
 		if record.Tps > 0 && record.Tps >= lastTps {
-			baseTxCount *= 2
+			incs := baseTxCount * w.conf.IncRate / 100
+			baseTxCount += incs
 			lastTps = record.Tps
 		} else {
 			noincrease++
