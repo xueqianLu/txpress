@@ -38,7 +38,7 @@ type ChainConfig struct {
 	Rpcs      []string `json:"rpc-nodes"`
 	Name      string   `json:"chain-name"`
 	BaseCount int      `json:"base-count"`
-	Rount     int      `json:"round"`
+	Round     int      `json:"round"`
 	Interval  int      `json:"interval"`
 	Batch     int      `json:"batch"`
 	Receiver  string   `json:"receiver"`

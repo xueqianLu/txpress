@@ -67,6 +67,7 @@ var rootCmd = &cobra.Command{
 			}
 			flow := workflow.NewWorkFlow(allchain, types.RunConfig{
 				BaseCount: cfg.BaseCount,
+				Round:     cfg.Round,
 				Batch:     cfg.Batch,
 				Interval:  time.Duration(cfg.Interval) * time.Second,
 				IncRate:   cfg.IncRate,
