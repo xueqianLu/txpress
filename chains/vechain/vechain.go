@@ -98,6 +98,26 @@ func (e VeChain) TxBlock(hash string) (int, error) {
 	return int(receipt.Meta.BlockNumber), nil
 }
 
+func (e VeChain) LatestBlockInfo() (types.BlockInfo, error) {
+	info, err := e.client.LatestBlock(e.ctx)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"chain": e.config.Name,
+			"rpc":   e.rpc,
+			"index": e.index,
+			"err":   err,
+		}).Error("get latest block info failed")
+		return types.BlockInfo{}, err
+	}
+	return types.BlockInfo{
+		Number:      info.Number,
+		Timestamp:   info.Timestamp,
+		TxCount:     int64(len(info.Txs)),
+		Beneficiary: info.Beneficiary,
+	}, nil
+
+}
+
 func (e VeChain) GetBlockInfo(number int64) (types.BlockInfo, error) {
 	blk := new(big.Int).SetInt64(number)
 	info, err := e.client.BlockByNumber(e.ctx, blk)
@@ -111,9 +131,10 @@ func (e VeChain) GetBlockInfo(number int64) (types.BlockInfo, error) {
 		return types.BlockInfo{}, err
 	}
 	return types.BlockInfo{
-		Number:    info.Number,
-		Timestamp: info.Timestamp,
-		TxCount:   int64(len(info.Txs)),
+		Number:      info.Number,
+		Timestamp:   info.Timestamp,
+		TxCount:     int64(len(info.Txs)),
+		Beneficiary: info.Beneficiary,
 	}, nil
 }
 

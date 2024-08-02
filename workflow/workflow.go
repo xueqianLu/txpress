@@ -3,6 +3,7 @@ package workflow
 import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xueqianLu/txpress/types"
+	"strings"
 	"sync"
 	"time"
 )
@@ -40,68 +41,74 @@ func NewWorkFlow(chains []types.ChainPlugin, conf types.RunConfig) *Workflow {
 		quit:   make(chan struct{}),
 	}
 }
-func (w *Workflow) Start() {
-	resultCh := make(chan Result, 1)
 
+func (w *Workflow) wait() {
+	for {
+		start := false
+		for _, chain := range w.chains {
+			block, err := chain.LatestBlockInfo()
+			if err != nil || strings.ToLower(block.Beneficiary) != "0x0000000000000000000000000000000000000010" {
+				log.Info("wait start, when latest block.Beneficiary is 0x0000000000000000000000000000000000000010")
+				continue
+			}
+			start = true
+			break
+		}
+		if start {
+			break
+		} else {
+			time.Sleep(time.Second * 3)
+		}
+	}
+	log.Info("wait finished")
+}
+
+func (w *Workflow) Start() {
 	wg := sync.WaitGroup{}
-	taskChs := make([]chan Task, len(w.chains))
+	tss := make([]*txStream, len(w.chains))
 	for i, chain := range w.chains {
-		taskChs[i] = make(chan Task, 1)
+		tss[i] = newTxStream(chain, w.conf, w.quit)
 		wg.Add(1)
-		go w.loop(chain, taskChs[i], resultCh, &wg)
+		go func(ts *txStream) {
+			ts.pause(true)
+			ts.start()
+			wg.Done()
+		}(tss[i])
 	}
 
-	baseTxCount := w.conf.BaseCount
 	lastTps := 0
-	noincrease := 0
+	baseTxCount := w.conf.BaseCount
 	history := make([]Record, 0)
+	// wait start, if latest block benefit is "", then start the test.
 
-	for {
-		for _, ch := range taskChs {
-			ch <- Task{
-				baseCount: baseTxCount,
-				batch:     w.conf.Batch,
-				interval:  w.conf.Interval,
-			}
+	for r := 0; r < w.conf.Round; r++ {
+		w.wait()
+		for _, ts := range tss {
+			ts.pause(false)
 		}
-		// wait task finished.
-		var minBlock, maxBlock int
-		results := make([]Result, 0)
-		for len(results) < len(w.chains) {
-			select {
-			case result := <-resultCh:
-				log.Infof("chain %s finished, min block: %d, max block: %d", result.chain, result.minBlock, result.maxBlock)
-				results = append(results, result)
-				if minBlock == 0 {
-					minBlock = result.minBlock
-				}
-				if maxBlock == 0 {
-					maxBlock = result.maxBlock
-				}
+		begin, e := w.chains[0].LatestBlockInfo()
+		if e != nil {
+			log.Error("get latest block info failed")
+			continue
+		}
+		time.Sleep(w.conf.Interval * time.Second * time.Duration(w.conf.Batch))
+		end, e := w.chains[0].LatestBlockInfo()
+		if e != nil {
+			log.Error("get latest block info failed")
+			continue
+		}
+		// pause all stream
+		for _, ts := range tss {
+			ts.pause(true)
+		}
 
-				if result.minBlock < minBlock {
-					minBlock = result.minBlock
-				}
-				if result.maxBlock > maxBlock {
-					maxBlock = result.maxBlock
-				}
-			case <-time.After(time.Second * 5):
-				log.Infof("wait test finished")
-			}
-		}
 		log.Info("all chain run task finished")
 		// calculate tps
-		record := w.calculateTps(w.chains[0], minBlock, maxBlock)
+		record := w.calculateTps(w.chains[0], int(begin.Number), int(end.Number))
 		if record.Tps > 0 && record.Tps >= lastTps {
 			incs := baseTxCount * w.conf.IncRate / 100
 			baseTxCount += incs
 			lastTps = record.Tps
-		} else {
-
-			if noincrease >= 2 {
-				break
-			}
-			noincrease++
 		}
 		history = append(history, record)
 		log.WithFields(log.Fields{
@@ -111,9 +118,15 @@ func (w *Workflow) Start() {
 			"totaltx":   record.TotalTx,
 			"tps":       record.Tps,
 		}).Info("test one round finished")
+		newConf := w.conf
+		newConf.BaseCount = baseTxCount
+		for _, ts := range tss {
+			ts.updateSpeed(newConf)
+		}
 	}
 
 	close(w.quit)
+
 	wg.Wait()
 	for _, record := range history {
 		log.WithFields(log.Fields{

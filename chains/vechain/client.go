@@ -36,10 +36,11 @@ func NewVechainClient(ctx context.Context, url string) *Client {
 }
 
 type BlockInfo struct {
-	Number    int64    `json:"number"`
-	Txs       []string `json:"transactions"`
-	Timestamp int64    `json:"timestamp"`
-	ID        string   `json:"id"`
+	Number      int64    `json:"number"`
+	Txs         []string `json:"transactions"`
+	Timestamp   int64    `json:"timestamp"`
+	ID          string   `json:"id"`
+	Beneficiary string   `json:"beneficiary"`
 }
 
 func (c *Client) Close() {

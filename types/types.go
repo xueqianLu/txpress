@@ -1,15 +1,18 @@
 package types
 
-import "time"
+import (
+	"time"
+)
 
 type ChainTx interface {
 	IsChainTx() bool
 }
 
 type BlockInfo struct {
-	Timestamp int64
-	Number    int64
-	TxCount   int64
+	Timestamp   int64
+	Number      int64
+	TxCount     int64
+	Beneficiary string
 }
 
 type ChainPlugin interface {
@@ -18,6 +21,7 @@ type ChainPlugin interface {
 	TxReceipt(hash string) error
 	TxBlock(hash string) (int, error)
 	GetBlockInfo(number int64) (BlockInfo, error)
+	LatestBlockInfo() (BlockInfo, error)
 	SecondPerBlock() int
 	Id() string
 }
@@ -26,6 +30,7 @@ type RunConfig struct {
 	BaseCount int
 	Interval  time.Duration
 	Batch     int
+	Round     int
 	IncRate   int
 }
 
@@ -33,6 +38,7 @@ type ChainConfig struct {
 	Rpcs      []string `json:"rpc-nodes"`
 	Name      string   `json:"chain-name"`
 	BaseCount int      `json:"base-count"`
+	Rount     int      `json:"round"`
 	Interval  int      `json:"interval"`
 	Batch     int      `json:"batch"`
 	Receiver  string   `json:"receiver"`
