@@ -48,7 +48,6 @@ func (w *Workflow) wait() {
 		for _, chain := range w.chains {
 			block, err := chain.LatestBlockInfo()
 			if err != nil || strings.ToLower(block.Beneficiary) != "0x0000000000000000000000000000000000000010" {
-				log.Info("wait start, when latest block.Beneficiary is 0x0000000000000000000000000000000000000010")
 				continue
 			}
 			start = true
@@ -57,6 +56,7 @@ func (w *Workflow) wait() {
 		if start {
 			break
 		} else {
+			log.Info("wait when latest block.Beneficiary is 0x0000000000000000000000000000000000000010")
 			time.Sleep(time.Second * 3)
 		}
 	}
