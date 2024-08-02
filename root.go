@@ -66,11 +66,12 @@ var rootCmd = &cobra.Command{
 				return
 			}
 			flow := workflow.NewWorkFlow(allchain, types.RunConfig{
-				BaseCount: cfg.BaseCount,
-				Round:     cfg.Round,
-				Batch:     cfg.Batch,
-				Interval:  time.Duration(cfg.Interval) * time.Second,
-				IncRate:   cfg.IncRate,
+				BaseCount:    cfg.BaseCount,
+				Round:        cfg.Round,
+				Batch:        cfg.Batch,
+				Interval:     time.Duration(cfg.Interval) * time.Second,
+				IncRate:      cfg.IncRate,
+				BeginToStart: cfg.BeginToStart,
 			})
 
 			if cpuProfile {

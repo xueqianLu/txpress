@@ -3,7 +3,6 @@ package workflow
 import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xueqianLu/txpress/types"
-	"strings"
 	"sync"
 	"time"
 )
@@ -47,7 +46,7 @@ func (w *Workflow) wait() {
 		start := false
 		for _, chain := range w.chains {
 			block, err := chain.LatestBlockInfo()
-			if err != nil || strings.ToLower(block.Beneficiary) != "0x0000000000000000000000000000000000000010" {
+			if err != nil || block.Number < int64(w.conf.BeginToStart) {
 				continue
 			}
 			start = true
@@ -56,7 +55,7 @@ func (w *Workflow) wait() {
 		if start {
 			break
 		} else {
-			log.Info("wait when latest block.Beneficiary is 0x0000000000000000000000000000000000000010")
+			log.Info("wait when latest block.number > ", w.conf.BeginToStart)
 			time.Sleep(time.Second * 3)
 		}
 	}
@@ -80,9 +79,9 @@ func (w *Workflow) Start() {
 	baseTxCount := w.conf.BaseCount
 	history := make([]Record, 0)
 	// wait start, if latest block benefit is "", then start the test.
+	w.wait()
 
 	for r := 0; r < w.conf.Round; r++ {
-		w.wait()
 		for _, ts := range tss {
 			ts.pause(false)
 		}
@@ -104,7 +103,7 @@ func (w *Workflow) Start() {
 
 		log.Info("all chain run task finished")
 		// calculate tps
-		record := w.calculateTps(w.chains[0], int(begin.Number), int(end.Number))
+		record := w.calculateTps(w.chains[0], int(begin.Number)+1, int(end.Number))
 		if record.Tps > 0 && record.Tps >= lastTps {
 			incs := baseTxCount * w.conf.IncRate / 100
 			baseTxCount += incs
@@ -123,6 +122,8 @@ func (w *Workflow) Start() {
 		for _, ts := range tss {
 			ts.updateSpeed(newConf)
 		}
+		// wait for next round
+
 	}
 
 	close(w.quit)
