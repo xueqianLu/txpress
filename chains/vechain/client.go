@@ -91,7 +91,7 @@ func (c *Client) FinalizedBlock(ctx context.Context) (BlockInfo, error) {
 }
 
 func (c *Client) LatestBlock(ctx context.Context) (BlockInfo, error) {
-	api := fmt.Sprintf("%s/blocks/", c.url)
+	api := fmt.Sprintf("%s/blocks/best", c.url)
 	res, err := c.get(api)
 	if err != nil {
 		return BlockInfo{}, err
