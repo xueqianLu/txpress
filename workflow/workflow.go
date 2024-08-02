@@ -91,7 +91,7 @@ func (w *Workflow) Start() {
 			log.Error("get latest block info failed")
 			continue
 		}
-		time.Sleep(w.conf.Interval * time.Second * time.Duration(w.conf.Batch))
+		time.Sleep(w.conf.Interval * time.Duration(w.conf.Batch))
 		end, e := w.chains[0].LatestBlockInfo()
 		if e != nil {
 			log.Error("get latest block info failed")
