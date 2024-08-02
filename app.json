@@ -6,6 +6,7 @@
   "chain-name": "vechain",
   "base-count": 2,
   "interval": 1,
+  "round": 8,
   "batch": 180,
   "amount": "10000000",
   "accounts":"accounts.json",
