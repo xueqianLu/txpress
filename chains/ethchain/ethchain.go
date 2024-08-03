@@ -22,6 +22,14 @@ type EthChain struct {
 	config   types.ChainConfig
 }
 
+func (e EthChain) LatestBlockInfo() (types.BlockInfo, error) {
+	latest, err := e.client.BlockNumber(e.ctx)
+	if err != nil {
+		return types.BlockInfo{}, err
+	}
+	return e.GetBlockInfo(int64(latest))
+}
+
 func (e EthChain) CreateTxs(count int, checkNonce bool) ([]types.ChainTx, error) {
 	txs := make([]types.ChainTx, 0)
 	updated := make(map[common.Address]bool)
@@ -121,9 +129,10 @@ func (e EthChain) GetBlockInfo(number int64) (types.BlockInfo, error) {
 		return types.BlockInfo{}, err
 	}
 	return types.BlockInfo{
-		Number:    info.Number().Int64(),
-		Timestamp: int64(info.Time()),
-		TxCount:   int64(len(info.Transactions())),
+		Number:      info.Number().Int64(),
+		Timestamp:   int64(info.Time()),
+		TxCount:     int64(len(info.Transactions())),
+		Beneficiary: info.Coinbase().String(),
 	}, nil
 }
 
