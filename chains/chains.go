@@ -4,6 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xueqianLu/txpress/chains/vechain"
 	"github.com/xueqianLu/txpress/types"
+	"time"
 )
 
 func NewChains(config types.ChainConfig) []types.ChainPlugin {
@@ -29,9 +30,7 @@ func NewChains(config types.ChainConfig) []types.ChainPlugin {
 	return chains
 }
 
-func CalcTps(chain types.ChainPlugin, minBlock, maxBlock int) types.Record {
-	start := int64(0)
-	end := int64(0)
+func CalcTps(chain types.ChainPlugin, minBlock, maxBlock int, duration time.Duration) types.Record {
 	txCount := int64(0)
 	for i := minBlock; i <= maxBlock; i++ {
 		block, err := chain.GetBlockInfo(int64(i))
@@ -39,18 +38,12 @@ func CalcTps(chain types.ChainPlugin, minBlock, maxBlock int) types.Record {
 			log.Errorf("get block info failed: %s", err)
 			continue
 		}
-		if i == minBlock {
-			start = block.Timestamp
-		}
-		if i == maxBlock {
-			end = block.Timestamp
-		}
 		txCount += block.TxCount
 	}
 	record := types.Record{
 		Begin:     int(minBlock),
 		End:       int(maxBlock),
-		TotalTime: int(end-start) + chain.SecondPerBlock(),
+		TotalTime: int(duration.Seconds()),
 		TotalTx:   int(txCount),
 	}
 	if record.TotalTime > 0 {
