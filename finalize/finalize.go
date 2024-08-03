@@ -46,11 +46,13 @@ func (f *Finalize) Loop() {
 				record := chains.CalcTps(f.chain, lastfinalized+1, finalized)
 				lastfinalized = finalized
 				log.WithFields(log.Fields{
-					"chain":   f.chain.Id(),
-					"tps":     record.Tps,
-					"begin":   record.Begin,
-					"end":     record.End,
-					"txcount": record.TotalTx,
+					"chain":       f.chain.Id(),
+					"tps":         record.Tps,
+					"begin":       record.Begin,
+					"end":         record.End,
+					"txcount":     record.TotalTx,
+					"latestBlock": blk.Number,
+					"finalized":   finalized,
 				}).Info("finalized tps info")
 			} else {
 				log.WithFields(log.Fields{
