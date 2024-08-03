@@ -115,7 +115,6 @@ func (e VeChain) LatestBlockInfo() (types.BlockInfo, error) {
 		TxCount:     int64(len(info.Txs)),
 		Beneficiary: info.Beneficiary,
 	}, nil
-
 }
 
 func (e VeChain) GetBlockInfo(number int64) (types.BlockInfo, error) {
@@ -140,6 +139,21 @@ func (e VeChain) GetBlockInfo(number int64) (types.BlockInfo, error) {
 
 func (e VeChain) Id() string {
 	return fmt.Sprintf("%s-%d", e.config.Name, e.index)
+}
+
+func (e VeChain) FinalizedBlock() (int, error) {
+	info, err := e.client.FinalizedBlock(e.ctx)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"chain": e.config.Name,
+			"rpc":   e.rpc,
+			"index": e.index,
+			"err":   err,
+		}).Error("get finalized block info failed")
+		return 0, err
+	}
+	return int(info.Number), nil
+
 }
 
 func (e VeChain) SecondPerBlock() int {

@@ -28,3 +28,34 @@ func NewChains(config types.ChainConfig) []types.ChainPlugin {
 	}
 	return chains
 }
+
+func CalcTps(chain types.ChainPlugin, minBlock, maxBlock int) types.Record {
+	start := int64(0)
+	end := int64(0)
+	txCount := int64(0)
+	for i := minBlock; i <= maxBlock; i++ {
+		block, err := chain.GetBlockInfo(int64(i))
+		if err != nil {
+			log.Errorf("get block info failed: %s", err)
+			continue
+		}
+		if i == minBlock {
+			start = block.Timestamp
+		}
+		if i == maxBlock {
+			end = block.Timestamp
+		}
+		txCount += block.TxCount
+	}
+	record := types.Record{
+		Begin:     int(minBlock),
+		End:       int(maxBlock),
+		TotalTime: int(end-start) + chain.SecondPerBlock(),
+		TotalTx:   int(txCount),
+	}
+	if record.TotalTime > 0 {
+		record.Tps = int(txCount) / (record.TotalTime)
+	}
+
+	return record
+}

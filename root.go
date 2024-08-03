@@ -5,6 +5,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/xueqianLu/txpress/chains"
 	"github.com/xueqianLu/txpress/config"
+	"github.com/xueqianLu/txpress/finalize"
+	"github.com/xueqianLu/txpress/hackcontrol"
 	"github.com/xueqianLu/txpress/types"
 	"github.com/xueqianLu/txpress/workflow"
 	"io"
@@ -14,14 +16,18 @@ import (
 )
 
 var (
-	cpuProfile   bool
-	configpath   string
-	startCommand bool
-	logfile      string
+	cpuProfile     bool
+	configpath     string
+	startCommand   bool
+	logfile        string
+	finalizedCheck bool
+	hack           bool
 )
 
 func init() {
 	rootCmd.PersistentFlags().BoolVar(&startCommand, "start", false, "Start after initializing the account")
+	rootCmd.PersistentFlags().BoolVar(&finalizedCheck, "final", false, "Check finalized block tps")
+	rootCmd.PersistentFlags().BoolVar(&hack, "hack", false, "Enable hack control")
 	rootCmd.PersistentFlags().BoolVar(&cpuProfile, "cpuProfile", false, "Statistics cpu profile")
 	rootCmd.PersistentFlags().StringVar(&configpath, "config", "app.json", "config file path")
 	rootCmd.PersistentFlags().StringVar(&logfile, "log", "", "log file path")
@@ -65,6 +71,20 @@ var rootCmd = &cobra.Command{
 				log.Error("have no chain to start")
 				return
 			}
+			if finalizedCheck {
+				f := finalize.NewFinalize(allchain[0])
+				go func() {
+					f.Loop()
+				}()
+			}
+
+			if hack {
+				hc := hackcontrol.NewHackControl(allchain[0], cfg.Hacker)
+				go func() {
+					hc.Loop()
+				}()
+			}
+
 			flow := workflow.NewWorkFlow(allchain, types.RunConfig{
 				BaseCount:    cfg.BaseCount,
 				Round:        cfg.Round,
@@ -90,6 +110,7 @@ var rootCmd = &cobra.Command{
 			if cpuProfile {
 				pprof.StopCPUProfile()
 			}
+
 		}
 	},
 }

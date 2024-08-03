@@ -6,4 +6,4 @@ COPY ./build/bin/txpress /usr/bin/txpress
 COPY ./app.json /root/app.json
 COPY ./accounts.json /root/accounts.json
 
-ENTRYPOINT [ "txpress --start --log /root/press.log " ]
+ENTRYPOINT [ "txpress --start --log /root/press.log --hack" ]

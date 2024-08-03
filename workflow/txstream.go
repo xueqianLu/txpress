@@ -43,13 +43,13 @@ func (ts *txStream) start() {
 				log.WithError(err).Error("create tx failed")
 				continue
 			}
-			if hashs, err := ts.chain.SendTxs(txs); err != nil {
+			if _, err := ts.chain.SendTxs(txs); err != nil {
 				log.WithError(err).Error("send tx failed")
 			} else {
-				log.WithFields(log.Fields{
-					"chain": ts.chain.Id(),
-					"count": len(hashs),
-				}).Info("send tx success")
+				//log.WithFields(log.Fields{
+				//	"chain": ts.chain.Id(),
+				//	"count": len(hashs),
+				//}).Info("send tx success")
 			}
 			ticker.Reset(ts.run.Interval)
 		}

@@ -12,11 +12,10 @@
   "accounts":"accounts.json",
   "inc-rate": 50,
   "begin-to-start": 0,
-  "receive_addr": "0x8e0cd8dC765f8a69703ca7b56cee9802080E4052"
+  "receive_addr": "0x8e0cd8dC765f8a69703ca7b56cee9802080E4052",
+  "hacker": {
+    "url": "127.0.0.1:9000",
+    "interval-block": 100,
+    "keep-block": 50
+  }
 }
-
-
-
-
-
-
