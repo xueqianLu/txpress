@@ -60,11 +60,17 @@ var rootCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		if startCommand {
-			allchain := chains.NewChains(cfg)
-			if len(allchain) == 0 {
-				log.Error("have no chain to start")
-				return
+			var allchain []types.ChainPlugin
+			for {
+				allchain = chains.NewChains(cfg)
+				if len(allchain) == 0 {
+					log.Error("have no chain to start, wait")
+					time.Sleep(3 * time.Second)
+					continue
+				}
+				break
 			}
+
 			flow := workflow.NewWorkFlow(allchain, types.RunConfig{
 				BaseCount:    cfg.BaseCount,
 				Round:        cfg.Round,
