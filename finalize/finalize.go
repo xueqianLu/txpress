@@ -21,13 +21,25 @@ func NewFinalize(chain types.ChainPlugin) *Finalize {
 
 func (f *Finalize) Loop() {
 	tm := time.NewTicker(time.Minute * 20)
+	updateTm := time.NewTicker(time.Second * 10)
 	defer tm.Stop()
+	defer updateTm.Stop()
 	lastfinalized := 0
+	blockTime := make(map[int]time.Time)
 
 	for {
 		select {
 		case <-f.quit:
 			return
+		case <-updateTm.C:
+			finalized, err := f.chain.FinalizedBlock()
+			if err != nil {
+				continue
+			}
+			if _, ok := blockTime[finalized]; !ok {
+				blockTime[finalized] = time.Now()
+			}
+
 		case <-tm.C:
 			// 1. get latest block number.
 			blk, err := f.chain.LatestBlockInfo()
@@ -42,8 +54,15 @@ func (f *Finalize) Loop() {
 			}
 
 			if finalized > lastfinalized {
+				if _, exist := blockTime[lastfinalized]; !exist {
+					blockTime[lastfinalized] = time.Now()
+				}
+				if _, exist := blockTime[finalized]; !exist {
+					blockTime[finalized] = time.Now()
+				}
+
 				// if finalized block changed, calc tps from last finalized block to current finalized block.
-				record := chains.CalcTps(f.chain, lastfinalized+1, finalized)
+				record := chains.CalcTps(f.chain, lastfinalized+1, finalized, blockTime[finalized].Sub(blockTime[lastfinalized]))
 				lastfinalized = finalized
 				log.WithFields(log.Fields{
 					"chain":       f.chain.Id(),
