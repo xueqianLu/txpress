@@ -20,7 +20,7 @@ func NewFinalize(chain types.ChainPlugin) *Finalize {
 }
 
 func (f *Finalize) Loop() {
-	tm := time.NewTicker(time.Second * 60)
+	tm := time.NewTicker(time.Minute * 20)
 	defer tm.Stop()
 	lastfinalized := 0
 
