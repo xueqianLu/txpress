@@ -27,26 +27,28 @@ type ChainPlugin interface {
 }
 
 type RunConfig struct {
-	BaseCount    int
-	Interval     time.Duration
-	Batch        int
-	Round        int
-	IncRate      int
-	BeginToStart int
+	BaseCount     int
+	Interval      time.Duration
+	Batch         int
+	Round         int
+	IncRate       int
+	BeginToStart  int
+	ForceIncrease bool
 }
 
 type ChainConfig struct {
-	Rpcs         []string `json:"rpc-nodes"`
-	Name         string   `json:"chain-name"`
-	BaseCount    int      `json:"base-count"`
-	Round        int      `json:"round"`
-	Interval     int      `json:"interval"`
-	Batch        int      `json:"batch"`
-	Receiver     string   `json:"receiver"`
-	Amount       string   `json:"amount"`
-	Accounts     string   `json:"accounts"`
-	IncRate      int      `json:"inc-rate"`
-	BeginToStart int      `json:"begin-to-start"`
+	Rpcs          []string `json:"rpc-nodes"`
+	Name          string   `json:"chain-name"`
+	BaseCount     int      `json:"base-count"`
+	Round         int      `json:"round"`
+	Interval      int      `json:"interval"`
+	Batch         int      `json:"batch"`
+	Receiver      string   `json:"receiver"`
+	Amount        string   `json:"amount"`
+	Accounts      string   `json:"accounts"`
+	IncRate       int      `json:"inc-rate"`
+	ForceIncrease bool     `json:"force-increase"`
+	BeginToStart  int      `json:"begin-to-start"`
 }
 
 type Record struct {

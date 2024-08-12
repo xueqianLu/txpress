@@ -1,17 +1,17 @@
 {
   "rpc-nodes": [
-    "http://127.0.0.1:10001",
-    "http://127.0.0.1:10002"
+    "http://52.221.177.10:18545"
   ],
   "chain-name": "eth",
-  "base-count": 2,
+  "base-count": 1,
   "interval": 1,
-  "round": 8,
-  "batch": 180,
-  "amount": "10000000",
+  "round": 1,
+  "batch": 1,
+  "amount": "5000000",
   "accounts":"accounts.json",
   "inc-rate": 50,
   "begin-to-start": 0,
+  "force-increase": false,
   "receive_addr": "0x8e0cd8dC765f8a69703ca7b56cee9802080E4052"
 }
 

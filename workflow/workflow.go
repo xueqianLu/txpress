@@ -104,7 +104,7 @@ func (w *Workflow) Start() {
 
 		// calculate tps
 		record := w.calculateTps(w.chains[0], int(begin.Number)+1, int(end.Number), endTime.Sub(beginTime))
-		if record.Tps > 0 && record.Tps >= lastTps {
+		if record.Tps > 0 && record.Tps >= lastTps || w.conf.ForceIncrease {
 			incs := baseTxCount * w.conf.IncRate / 100
 			baseTxCount += incs
 			lastTps = record.Tps
