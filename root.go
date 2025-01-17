@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"github.com/ethereum/go-ethereum/crypto"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/xueqianLu/txpress/chains"
@@ -10,6 +12,7 @@ import (
 	"io"
 	"os"
 	"runtime/pprof"
+	"strconv"
 	"time"
 )
 
@@ -26,7 +29,12 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&configpath, "config", "app.json", "config file path")
 	rootCmd.PersistentFlags().StringVar(&logfile, "log", "", "log file path")
 
+	accountCmd.Flags().Int("count", 1, "account count")
+	accountCmd.Flags().String("balance", "1", "account balance")
+	accountCmd.Flags().String("nonce", "0", "account nonce")
+
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(accountCmd)
 }
 
 func Execute() {
@@ -107,5 +115,61 @@ var versionCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Info("Version: ", Version)
 		log.Info("Git Commit: ", Commit)
+	},
+}
+
+var accountCmd = &cobra.Command{
+	Use:   "account",
+	Short: "Create account",
+	Run: func(cmd *cobra.Command, args []string) {
+		// account count.
+		// get account count from a flag.
+		accfile := "accounts.json"
+		genfile := "gen-alloc.json"
+		count, _ := strconv.ParseInt(cmd.Flags().Lookup("count").Value.String(), 10, 64)
+		balance := cmd.Flags().Lookup("balance").Value.String()
+		nonce, _ := strconv.ParseInt(cmd.Flags().Lookup("nonce").Value.String(), 10, 64)
+
+		type GenesisInfo struct {
+			Alloc map[string]map[string]string
+		}
+		type AccountInfo struct {
+			Address string
+			Private string
+			Nonce   int
+		}
+		accounts := make([]AccountInfo, 0)
+		genesisInfo := GenesisInfo{
+			Alloc: make(map[string]map[string]string),
+		}
+		for i := int64(0); i < count; i++ {
+			pk, err := crypto.GenerateKey()
+			if err != nil {
+				log.Error("Generate key error: ", err)
+				return
+			}
+			address := crypto.PubkeyToAddress(pk.PublicKey).Hex()
+			private := pkPadding(pk.D.Text(16))
+			accounts = append(accounts, AccountInfo{
+				Address: address,
+				Private: private,
+				Nonce:   int(nonce),
+			})
+			usergeninfo := make(map[string]string)
+			usergeninfo["balance"] = toWei(balance)
+			genesisInfo.Alloc[address] = usergeninfo
+		}
+		accinfo, _ := json.MarshalIndent(accounts, "", "    ")
+		if err := os.WriteFile(accfile, accinfo, 0666); err != nil {
+			log.Error("Write account info error: ", err)
+			return
+		}
+		geninfo, _ := json.MarshalIndent(genesisInfo, "", "    ")
+		if err := os.WriteFile(genfile, geninfo, 0666); err != nil {
+			log.Error("Write genesis info error: ", err)
+			return
+		}
+		log.Infof("account generate success, please see %s and %s", accfile, genfile)
+		return
 	},
 }
