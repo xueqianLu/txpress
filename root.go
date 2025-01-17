@@ -156,7 +156,7 @@ var accountCmd = &cobra.Command{
 				Nonce:   int(nonce),
 			})
 			usergeninfo := make(map[string]string)
-			usergeninfo["balance"] = toWei(balance)
+			usergeninfo["balance"] = toWeiHex(balance)
 			genesisInfo.Alloc[address] = usergeninfo
 		}
 		accinfo, _ := json.MarshalIndent(accounts, "", "    ")
