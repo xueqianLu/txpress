@@ -131,12 +131,12 @@ var accountCmd = &cobra.Command{
 		nonce, _ := strconv.ParseInt(cmd.Flags().Lookup("nonce").Value.String(), 10, 64)
 
 		type GenesisInfo struct {
-			Alloc map[string]map[string]string
+			Alloc map[string]map[string]string `json:"alloc"`
 		}
 		type AccountInfo struct {
-			Address string
-			Private string
-			Nonce   int
+			Address string `json:"address"`
+			Private string `json:"private"`
+			Nonce   int    `json:"nonce"`
 		}
 		accounts := make([]AccountInfo, 0)
 		genesisInfo := GenesisInfo{
