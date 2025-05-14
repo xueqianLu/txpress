@@ -1,0 +1,17 @@
+version: '3'
+networks:
+        default:
+                driver: bridge
+                
+services:
+        txpress:
+                image: "txpress:latest"
+                restart: always
+                networks:
+                        - default
+                environment:
+                        - TZ=Asia/Shanghai
+                volumes:
+                        - "/etc/localtime:/etc/localtime"
+                        - "./app.json:/root/app.json"
+                        - "./accounts.json:/root/accounts.json"
