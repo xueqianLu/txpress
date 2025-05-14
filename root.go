@@ -2,47 +2,39 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/ethereum/go-ethereum/crypto"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/xueqianLu/txpress/clientpool"
+	"github.com/xueqianLu/txpress/chains"
 	"github.com/xueqianLu/txpress/config"
-	"github.com/xueqianLu/txpress/tool"
-	"io/fs"
-	"math/big"
+	"github.com/xueqianLu/txpress/types"
+	"github.com/xueqianLu/txpress/workflow"
+	"io"
 	"os"
 	"runtime/pprof"
+	"strconv"
+	"time"
 )
 
 var (
-	initAccCount     int64
-	initEthAmount    int64
-	cpuProfile       bool
-	configpath       string
-	startCommand     bool
-	noCheckNonce     bool
-	tokentransaction bool
+	cpuProfile   bool
+	configpath   string
+	startCommand bool
+	logfile      string
 )
 
 func init() {
 	rootCmd.PersistentFlags().BoolVar(&startCommand, "start", false, "Start after initializing the account")
-	rootCmd.PersistentFlags().BoolVar(&tokentransaction, "token", false, "Start test with erc20 token transfer")
 	rootCmd.PersistentFlags().BoolVar(&cpuProfile, "cpuProfile", false, "Statistics cpu profile")
 	rootCmd.PersistentFlags().StringVar(&configpath, "config", "app.json", "config file path")
-	rootCmd.PersistentFlags().BoolVar(&noCheckNonce, "nocheck", false, "no need check account nonce")
+	rootCmd.PersistentFlags().StringVar(&logfile, "log", "", "log file path")
 
-	accountCmd.PersistentFlags().Int64Var(&initAccCount, "count", 1, "Init account count")
-	accountCmd.PersistentFlags().Int64Var(&initEthAmount, "eth", 1, "Init account balance,default: 1ETH")
-	rootCmd.AddCommand(accountCmd)
+	accountCmd.Flags().Int("count", 1, "account count")
+	accountCmd.Flags().String("balance", "1", "account balance")
+	accountCmd.Flags().String("nonce", "0", "account nonce")
+
 	rootCmd.AddCommand(versionCmd)
-
-	cfg, err := config.ParseConfig(configpath)
-	if err != nil {
-		log.Error("parse config failed", "err", err)
-		os.Exit(1)
-	}
-
-	clientpool.InitPool(cfg)
+	rootCmd.AddCommand(accountCmd)
 }
 
 func Execute() {
@@ -52,38 +44,50 @@ func Execute() {
 	}
 }
 
+func logInit() {
+	if logfile != "" {
+		file, err := os.OpenFile(logfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		if err == nil {
+			log.SetOutput(io.MultiWriter(file, os.Stdout))
+		} else {
+			log.Info("Failed to log to file, using default stderr")
+		}
+	}
+}
+
 var rootCmd = &cobra.Command{
 	Use:   "txpress",
 	Short: "Stress test tools",
 	Run: func(cmd *cobra.Command, args []string) {
+		logInit()
+
 		log.Info("check start and ", "start is", startCommand)
-		cfg := config.GetConfig()
+
+		cfg, err := config.ParseConfig(configpath)
+		if err != nil {
+			os.Exit(1)
+		}
 		if startCommand {
-			accounts := tool.GetAccountJson(cfg)
-			if len(accounts) == 0 {
-				log.Error("get count failed")
-				os.Exit(1)
-			}
-			if len(accounts) > cfg.Count {
-				allaccounts := accounts
-				accounts = make([]*tool.Account, cfg.Count)
-				copy(accounts, allaccounts[:cfg.Count])
+			var allchain []types.ChainPlugin
+			for {
+				allchain = chains.NewChains(cfg)
+				if len(allchain) == 0 {
+					log.Error("have no chain to start, wait")
+					time.Sleep(3 * time.Second)
+					continue
+				}
+				break
 			}
 
-			if !noCheckNonce {
-				taskpool := make(chan interface{}, 1000000)
-				for _, account := range accounts {
-					taskpool <- account
-				}
-				tasks := tool.NewTasks(10, func(task interface{}) {
-					client := clientpool.GetClient()
-					account := task.(*tool.Account)
-					tool.CheckAccountNonce(client, account)
-				}, taskpool)
-				tasks.Run()
-				close(taskpool)
-				tasks.Done()
-			}
+			flow := workflow.NewWorkFlow(allchain, types.RunConfig{
+				BaseCount:     cfg.BaseCount,
+				Round:         cfg.Round,
+				Batch:         cfg.Batch,
+				Interval:      time.Duration(cfg.Interval) * time.Second,
+				IncRate:       cfg.IncRate,
+				BeginToStart:  cfg.BeginToStart,
+				ForceIncrease: cfg.ForceIncrease,
+			})
 
 			if cpuProfile {
 				f, err := os.Create("cpuprofile.log")
@@ -96,15 +100,11 @@ var rootCmd = &cobra.Command{
 					return
 				}
 			}
-			if tokentransaction {
-				cfg.Type = 1
-			}
+			flow.Start()
 
-			start(config.GetConfig(), accounts)
 			if cpuProfile {
 				pprof.StopCPUProfile()
 			}
-
 		}
 	},
 }
@@ -120,29 +120,56 @@ var versionCmd = &cobra.Command{
 
 var accountCmd = &cobra.Command{
 	Use:   "account",
-	Short: "Account cmd to create account",
+	Short: "Create account",
 	Run: func(cmd *cobra.Command, args []string) {
-		type Info struct {
-			Balance string `json:"balance"`
+		// account count.
+		// get account count from a flag.
+		accfile := "accounts.json"
+		genfile := "gen-alloc.json"
+		count, _ := strconv.ParseInt(cmd.Flags().Lookup("count").Value.String(), 10, 64)
+		balance := cmd.Flags().Lookup("balance").Value.String()
+		nonce, _ := strconv.ParseInt(cmd.Flags().Lookup("nonce").Value.String(), 10, 64)
+
+		type GenesisInfo struct {
+			Alloc map[string]map[string]string `json:"alloc"`
 		}
-		cfg := config.GetConfig()
-		accounts := tool.CreateAccounts(cfg, int(initAccCount))
-		if len(accounts) > 0 {
-			var infos = make(map[string]Info)
-			balance := new(big.Int).Mul(big.NewInt(1e18), big.NewInt(initEthAmount))
-			// export to genesis format.
-			for _, account := range accounts {
-				infos[account.Address.String()] = Info{
-					Balance: fmt.Sprintf("0x%s", balance.Text(16)),
-				}
-			}
-			d, _ := json.MarshalIndent(infos, "", "  ")
-			err := os.WriteFile("balance.json", d, fs.ModePerm)
+		type AccountInfo struct {
+			Address string `json:"address"`
+			Private string `json:"private"`
+			Nonce   int    `json:"nonce"`
+		}
+		accounts := make([]AccountInfo, 0)
+		genesisInfo := GenesisInfo{
+			Alloc: make(map[string]map[string]string),
+		}
+		for i := int64(0); i < count; i++ {
+			pk, err := crypto.GenerateKey()
 			if err != nil {
-				log.Error("write account info failed", "err", err)
+				log.Error("Generate key error: ", err)
+				return
 			}
-		} else {
-			log.Error("create accounts failed")
+			address := crypto.PubkeyToAddress(pk.PublicKey).Hex()
+			private := pkPadding(pk.D.Text(16))
+			accounts = append(accounts, AccountInfo{
+				Address: address,
+				Private: private,
+				Nonce:   int(nonce),
+			})
+			usergeninfo := make(map[string]string)
+			usergeninfo["balance"] = toWeiHex(balance)
+			genesisInfo.Alloc[address] = usergeninfo
 		}
+		accinfo, _ := json.MarshalIndent(accounts, "", "    ")
+		if err := os.WriteFile(accfile, accinfo, 0666); err != nil {
+			log.Error("Write account info error: ", err)
+			return
+		}
+		geninfo, _ := json.MarshalIndent(genesisInfo, "", "    ")
+		if err := os.WriteFile(genfile, geninfo, 0666); err != nil {
+			log.Error("Write genesis info error: ", err)
+			return
+		}
+		log.Infof("account generate success, please see %s and %s", accfile, genfile)
+		return
 	},
 }
