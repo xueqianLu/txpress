@@ -27,6 +27,7 @@ func newTxStream(chain types.ChainPlugin, run types.RunConfig, quit chan struct{
 func (ts *txStream) start() {
 	ticker := time.NewTicker(ts.run.Interval)
 	defer ticker.Stop()
+	first := true
 	for {
 		select {
 		case conf := <-ts.newConf:
@@ -38,11 +39,12 @@ func (ts *txStream) start() {
 				continue
 			}
 			// make tx
-			txs, err := ts.chain.CreateTxs(ts.run.BaseCount, false)
+			txs, err := ts.chain.CreateTxs(ts.run.BaseCount, first)
 			if err != nil {
 				log.WithError(err).Error("create tx failed")
 				continue
 			}
+			first = false
 			if _, err := ts.chain.SendTxs(txs); err != nil {
 				log.WithError(err).Error("send tx failed")
 			} else {
