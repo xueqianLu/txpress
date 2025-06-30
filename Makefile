@@ -22,5 +22,11 @@ txpress:
 clean:
 	rm -fr build/*
 
+start:
+	docker compose up -d
+
+stop:
+	docker compose down
+
 docker:
 	docker build -t txpress:${TAG} .

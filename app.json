@@ -12,5 +12,5 @@
   "inc-rate": 0,
   "begin-to-start": 0,
   "force-increase": false,
-  "receive_addr": "0x8e0cd8dC765f8a69703ca7b56cee9802080E4052"
+  "receiver": "0x8e0cd8dC765f8a69703ca7b56cee9802080E4052"
 }

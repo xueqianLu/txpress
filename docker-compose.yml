@@ -11,6 +11,8 @@ services:
                         - default
                 environment:
                         - TZ=Asia/Shanghai
+
+                entrypoint: /usr/bin/txpress --start --log /root/txpress.log
                 volumes:
                         - "/etc/localtime:/etc/localtime"
                         - "./app.json:/root/app.json"

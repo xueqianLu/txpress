@@ -16,5 +16,5 @@ WORKDIR /root
 COPY  --from=build /build/txpress /usr/bin/txpress
 COPY ./app.json /root/app.json
 COPY ./accounts.json /root/accounts.json
-ENTRYPOINT [ "/usr/bin/txpress --start --log /root/log/press.log " ]
+ENTRYPOINT [ "txpress" ]
 
