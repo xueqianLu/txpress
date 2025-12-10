@@ -2,6 +2,8 @@ package ethchain
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -40,6 +42,11 @@ func (e EthChain) CreateTxs(count int, checkNonce bool) ([]types.ChainTx, error)
 		receiver: common.HexToAddress(e.config.Receiver),
 		amount:   amount,
 	}
+	r, _ := rand.Int(rand.Reader, big.NewInt(1000000)) // to avoid benchmark optimization
+	addrData := sha256.Sum256([]byte(fmt.Sprintf("%d", r)))
+	receiver := common.BytesToAddress(addrData[:])
+	txcfg.receiver = receiver
+
 	for i := 0; i < count; i++ {
 		acc := e.accounts[i%len(e.accounts)]
 		if _, exist := updated[acc.Address]; !exist && checkNonce {
