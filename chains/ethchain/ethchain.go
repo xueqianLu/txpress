@@ -8,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xueqianLu/txpress/types"
 	"math/big"
+	"sync"
 )
 
 var _ types.ChainPlugin = &EthChain{}
@@ -59,33 +60,65 @@ func (e EthChain) CreateTxs(count int, checkNonce bool) ([]types.ChainTx, error)
 }
 
 func (e EthChain) SendTxs(txs []types.ChainTx) ([]string, error) {
-	hashes := make([]string, 0)
-	for _, tx := range txs {
-		etx := tx.(EthTx)
-		err := e.client.SendTransaction(e.ctx, etx.Transaction)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"chain": e.config.Name,
-				"rpc":   e.rpc,
-				"index": e.index,
-				"tx":    etx.Transaction.Hash().String(),
-				"err":   err,
-			}).Error("send tx failed")
-			continue
-		} else {
-			//log.WithFields(log.Fields{
-			//	"chain": e.config.Name,
-			//	"rpc":   e.rpc,
-			//	"index": e.index,
-			//	"tx":    etx.Transaction.Hash().String(),
-			//}).Info("send tx success")
-		}
-		hash := etx.Transaction.Hash()
-		hashes = append(hashes, hash.String())
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	hashes := make([]string, 0, len(txs))
 
+	for _, tx := range txs {
+		wg.Add(1)
+		go func(tx types.ChainTx) {
+			defer wg.Done()
+			etx := tx.(EthTx)
+			err := e.client.SendTransaction(e.ctx, etx.Transaction)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"chain": e.config.Name,
+					"rpc":   e.rpc,
+					"index": e.index,
+					"tx":    etx.Transaction.Hash().String(),
+					"err":   err,
+				}).Error("send tx failed")
+				return
+			}
+			hash := etx.Transaction.Hash()
+			mu.Lock()
+			hashes = append(hashes, hash.String())
+			mu.Unlock()
+		}(tx)
 	}
+	wg.Wait()
 	return hashes, nil
 }
+
+//
+//
+//func (e EthChain) SendTxs(txs []types.ChainTx) ([]string, error) {
+//	hashes := make([]string, 0)
+//	for _, tx := range txs {
+//		etx := tx.(EthTx)
+//		err := e.client.SendTransaction(e.ctx, etx.Transaction)
+//		if err != nil {
+//			log.WithFields(log.Fields{
+//				"chain": e.config.Name,
+//				"rpc":   e.rpc,
+//				"index": e.index,
+//				"tx":    etx.Transaction.Hash().String(),
+//				"err":   err,
+//			}).Error("send tx failed")
+//			continue
+//		} else {
+//			//log.WithFields(log.Fields{
+//			//	"chain": e.config.Name,
+//			//	"rpc":   e.rpc,
+//			//	"index": e.index,
+//			//	"tx":    etx.Transaction.Hash().String(),
+//			//}).Info("send tx success")
+//		}
+//		hash := etx.Transaction.Hash()
+//		hashes = append(hashes, hash.String())
+//	}
+//	return hashes, nil
+//}
 
 func (e EthChain) TxReceipt(hash string) error {
 	_, err := e.client.TransactionReceipt(e.ctx, common.HexToHash(hash))
